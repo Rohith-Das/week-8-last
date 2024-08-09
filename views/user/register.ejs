@@ -1,0 +1,249 @@
+<%- include ('../layout/header') %>
+
+
+
+<div class="header-right">
+    <ul class="top-menu">
+        <li>
+            <a href="#">Links</a>
+            <ul>
+                <li><a href="wishlist.html"><i class="icon-heart-o"></i>Wishlist <span>(3)</span></a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="#signin-modal" data-toggle="modal"><i class="icon-user"></i>Login</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="login-page bg-image pt-8 pb-8 pt-md-12 pb-md-12 pt-lg-17 pb-lg-17" style="background-image: url('assets/images/backgrounds/login-bg.jpg')">
+    <div class="container">
+        <div class="form-box">
+            <div class="form-tab">
+                <h3>Register</h3>
+                <form id="register-form" action="/register" method="post">
+                    <div class="form-group">
+                        <label for="name">Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div><!-- End .form-group -->
+        
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div><!-- End .form-group -->
+        
+                    <div class="form-group">
+                        <label for="phone">Phone *</label>
+                        <input type="text" class="form-control" id="phone" name="phone" required>
+                    </div><!-- End .form-group -->
+        
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div><!-- End .form-group -->
+        
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm Password *</label>
+                        <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
+                    </div><!-- End .form-group -->
+        
+                    <button type="button" id="request-otp" class="btn btn-outline-primary-2">Request OTP</button>
+        
+                    <div id="otp-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="otp">Enter OTP *</label>
+                            <input type="text" class="form-control" id="otp" name="otp" required>
+                        </div><!-- End .form-group -->
+        
+                        <button type="button" id="verify-otp" class="btn btn-outline-primary-2">Verify OTP</button>
+
+                        <button type="button" id="resend-otp" class="btn btn-outline-primary-2">Resend OTP</button>
+                        <p id="otp-timer"></p>
+                    </div><!-- End #otp-section -->
+                </form>
+        
+                <div class="form-footer">
+                    <p class="text-center">Already have an account? <a href="/login">Login</a></p>
+                </div><!-- End .form-footer -->
+            </div>
+        
+            <script>
+                
+                document.getElementById('request-otp').addEventListener('click', function() {
+    fetch('/request-otp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: document.getElementById('email').value })
+    })
+    .then(response => response.text())
+    .then(data => {
+        alert(data); // Show response message to user
+        document.getElementById('otp-section').style.display = 'block';
+        startTimer();
+    });
+});
+
+        
+document.getElementById('verify-otp').addEventListener('click', function() {
+        fetch('/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: document.getElementById('email').value,
+                otp: document.getElementById('otp').value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '/home'; // Redirect to home page
+            } else {
+                alert(data.message); // Show error message
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred');
+        });
+    });
+
+                document.getElementById('resend-otp').addEventListener('click', function() {
+                    fetch('/request-otp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email: document.getElementById('email').value })
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        alert(data);
+                        startTimer(); // Restart timer on resend
+                    });
+                });
+        
+                function startTimer() {
+                    let timer = 5 * 60; // 5 minutes
+                    const timerDisplay = document.getElementById('otp-timer');
+                    const interval = setInterval(function() {
+                        let minutes = Math.floor(timer / 60);
+                        let seconds = timer % 60;
+                        timerDisplay.textContent = `Time remaining: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        
+                        if (--timer < 0) {
+                            clearInterval(interval);
+                            timerDisplay.textContent = 'OTP expired';
+                        }
+                    }, 1000);
+                }
+            </script>
+        </div>
+    </div>
+</div>
+
+<%- include ('../layout/footer') %>
+
+<!-- Link to the JavaScript file -->
+<script src="/assets/js/registration.js"></script>
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 14px;
+    }
+    .form-control.is-valid {
+        border-color: green;
+    }
+    .form-control.is-invalid {
+        border-color: red;
+    }
+</style>
+
+
+<script>
+   document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('registration-form');
+
+    form.addEventListener('submit', function (event) {
+        let isValid = true;
+
+        // Username validation
+        const username = document.getElementById('register-username');
+        const usernameError = document.getElementById('username-error');
+        if (username.value.trim() === '') {
+            isValid = false;
+            usernameError.textContent = 'Username is required';
+            username.classList.add('is-invalid');
+        } else {
+            usernameError.textContent = '';
+            username.classList.remove('is-invalid');
+            username.classList.add('is-valid');
+        }
+
+        // Email validation
+        const email = document.getElementById('register-email');
+        const emailError = document.getElementById('email-error');
+        const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (!emailPattern.test(email.value)) {
+            isValid = false;
+            emailError.textContent = 'Invalid email address';
+            email.classList.add('is-invalid');
+        } else {
+            emailError.textContent = '';
+            email.classList.remove('is-invalid');
+            email.classList.add('is-valid');
+        }
+
+        // Phone validation
+        const phone = document.getElementById('register-phone');
+        const phoneError = document.getElementById('phone-error');
+        const phonePattern = /^[0-9]{10}$/;
+        if (!phonePattern.test(phone.value)) {
+            isValid = false;
+            phoneError.textContent = 'Invalid phone number';
+            phone.classList.add('is-invalid');
+        } else {
+            phoneError.textContent = '';
+            phone.classList.remove('is-invalid');
+            phone.classList.add('is-valid');
+        }
+
+        // Password validation
+        const password = document.getElementById('register-password');
+        const passwordError = document.getElementById('password-error');
+        if (password.value.length < 6) {
+            isValid = false;
+            passwordError.textContent = 'Password must be at least 6 characters long';
+            password.classList.add('is-invalid');
+        } else {
+            passwordError.textContent = '';
+            password.classList.remove('is-invalid');
+            password.classList.add('is-valid');
+        }
+
+        // Confirm Password validation
+        const confirmPassword = document.getElementById('register-confirm-password');
+        const confirmPasswordError = document.getElementById('confirm-password-error');
+        if (confirmPassword.value !== password.value) {
+            isValid = false;
+            confirmPasswordError.textContent = 'Passwords do not match';
+            confirmPassword.classList.add('is-invalid');
+        } else {
+            confirmPasswordError.textContent = '';
+            confirmPassword.classList.remove('is-invalid');
+            confirmPassword.classList.add('is-valid');
+        }
+
+        if (!isValid) {
+            event.preventDefault();
+        }
+    });
+});
+
+</script>
+
+<%- include ('../layout/footer') %>
